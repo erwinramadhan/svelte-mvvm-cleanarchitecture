@@ -1,7 +1,7 @@
 import { RegisterUseCase } from '../../core/usecases/RegisterUseCase';
 import { AuthRepositoryImpl } from '../../data/repositories/AuthRepositoryImpl';
 import { AuthApiDataSource } from '../../data/datasources/AuthApiDataSource';
-import { AuthResponse, RegisterCredentials } from '../../core/models/User';
+import type { AuthResponse, RegisterCredentials } from '../../core/models/User';
 import { authStore } from '../stores/authStore';
 import { writable } from 'svelte/store';
 
