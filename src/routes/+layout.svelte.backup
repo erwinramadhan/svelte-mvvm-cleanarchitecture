@@ -1,0 +1,68 @@
+<script lang="ts">
+	import '../app.css';
+	import favicon from '$lib/assets/favicon.svg';
+	import { page } from '$app/stores';
+	import { goto } from '$app/navigation';
+	import { authStore, isAuthenticated } from '../application/stores/authStore';
+	import { AuthService } from '../lib/services/AuthService';
+	import { onMount } from 'svelte';
+
+	let { children } = $props();
+	let isLoadingAuth = $state(true);
+
+	onMount(async () => {
+		// Initialize authentication state when the app loads
+		const authService = AuthService.getInstance();
+		
+		// Check if user has a token stored
+		const token = localStorage.getItem('auth_token');
+		if (token) {
+			try {
+				const result = await authService.verifyToken();
+				if (result.isValid && result.user) {
+					// Token is valid, update auth store
+					authStore.login(result.user, token);
+				} else {
+					// Token is invalid, clear it
+					authStore.logout();
+				}
+			} catch (error) {
+				console.error('Error verifying token:', error);
+				authStore.logout();
+			}
+		}
+
+		isLoadingAuth = false;
+
+		// Subscribe to auth changes to handle protected routes
+		authStore.subscribe((state) => {
+			const isAuthRoute = $page.url.pathname.startsWith('/login') || 
+							   $page.url.pathname.startsWith('/register');
+			const isProtectedRoute = !$page.url.pathname.startsWith('/login') && 
+								   !$page.url.pathname.startsWith('/register') && 
+								   $page.url.pathname !== '/';
+			
+			if (isProtectedRoute && !state.isAuthenticated && !isLoadingAuth) {
+				goto('/login');
+			} else if (isAuthRoute && state.isAuthenticated && !isLoadingAuth) {
+				// If user is authenticated and on auth route, redirect to home
+				goto('/');
+			}
+		});
+	});
+</script>
+
+<svelte:head>
+	<link rel="icon" href={favicon} />
+</svelte:head>
+
+{#if isLoadingAuth}
+	<div class="min-h-screen flex items-center justify-center bg-gray-50">
+		<div class="text-center">
+			<div class="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+			<p class="mt-4 text-gray-700">Initializing authentication...</p>
+		</div>
+	</div>
+{:else}
+	{@render children?.()}
+{/if}

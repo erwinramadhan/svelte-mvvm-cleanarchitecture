@@ -1,0 +1,335 @@
+{
+  "uuid": "svelte-mvvm-task-api",
+  "name": "Svelte MVVM Task API",
+  "endpointPrefix": "",
+  "latency": 0,
+  "port": 3001,
+  "routes": [
+    {
+      "id": "tasks-get",
+      "method": "get",
+      "endpoint": "tasks",
+      "responses": [
+        {
+          "id": "tasks-response",
+          "body": "[\n  {\n    \"task_id\": \"1\",\n    \"name\": \"Learn Svelte\",\n    \"is_done\": false\n  },\n  {\n    \"task_id\": \"2\",\n    \"name\": \"Build a Todo App\",\n    \"is_done\": true\n  },\n  {\n    \"task_id\": \"3\",\n    \"name\": \"Deploy to Production\",\n    \"is_done\": false\n  }\n]",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        }
+      ],
+      "enabled": true,
+      "documentation": "Get all tasks"
+    },
+    {
+      "id": "tasks-post",
+      "method": "post",
+      "endpoint": "tasks",
+      "responses": [
+        {
+          "id": "tasks-post-response",
+          "body": "{\n  \"task_id\": \"{{uuid}}\",\n  \"name\": \"{{bodyRaw.name}}\",\n  \"is_done\": false\n}",
+          "latency": 0,
+          "statusCode": 201,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        }
+      ],
+      "enabled": true,
+      "documentation": "Add a new task"
+    },
+    {
+      "id": "tasks-id-get",
+      "method": "get",
+      "endpoint": "tasks/:id",
+      "responses": [
+        {
+          "id": "tasks-id-response",
+          "body": "{\n  \"task_id\": \"{{params.id}}\",\n  \"name\": \"Sample Task\",\n  \"is_done\": false\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        }
+      ],
+      "enabled": true,
+      "documentation": "Get a specific task by ID"
+    },
+    {
+      "id": "tasks-id-patch",
+      "method": "patch",
+      "endpoint": "tasks/:id",
+      "responses": [
+        {
+          "id": "tasks-id-patch-response",
+          "body": "{\n  \"task_id\": \"{{params.id}}\",\n  \"name\": \"{{bodyRaw.name}}\",\n  \"is_done\": {{bodyRaw.is_done}}\n}",
+          "latency": 0,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        }
+      ],
+      "enabled": true,
+      "documentation": "Update a specific task by ID"
+    },
+    {
+      "id": "auth-register",
+      "method": "post",
+      "endpoint": "auth/register",
+      "responses": [
+        {
+          "id": "auth-register-success",
+          "body": "{\n  \"user\": {\n    \"id\": \"{{faker 'string.uuid'}}\",\n    \"email\": \"{{bodyRaw.email}}\",\n    \"name\": \"{{bodyRaw.name}}\",\n    \"created_at\": \"{{faker 'date.recent'}}\"\n  },\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.{{faker 'string.alphanumeric' 40}}\",\n  \"message\": \"Registration successful\"\n}",
+          "latency": 100,
+          "statusCode": 201,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        },
+        {
+          "id": "auth-register-error-email-exists",
+          "body": "{\n  \"error\": \"Email already exists\",\n  \"message\": \"User with this email already registered\"\n}",
+          "latency": 50,
+          "statusCode": 409,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "email",
+              "value": "test@example.com",
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        }
+      ],
+      "enabled": true,
+      "documentation": "Register a new user"
+    },
+    {
+      "id": "auth-login",
+      "method": "post",
+      "endpoint": "auth/login",
+      "responses": [
+        {
+          "id": "auth-login-success",
+          "body": "{\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"email\": \"{{bodyRaw.email}}\",\n    \"name\": \"John Doe\",\n    \"created_at\": \"2024-01-01T00:00:00Z\"\n  },\n  \"token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiI1NTBlODQwMC1lMjliLTQxZDQtYTcxNi00NDY2NTU0NDAwMDAiLCJlbWFpbCI6InRlc3RAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDk1MDAwMDAsImV4cCI6MTcwOTU4NjQwMH0.dGVzdF90b2tlbl9zaWduYXR1cmU\",\n  \"message\": \"Login successful\"\n}",
+          "latency": 100,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "body",
+              "modifier": "email",
+              "value": "test@example.com",
+              "operator": "equals"
+            },
+            {
+              "target": "body",
+              "modifier": "password",
+              "value": "password123",
+              "operator": "equals"
+            }
+          ],
+          "rulesOperator": "AND",
+          "disableTemplating": false
+        },
+        {
+          "id": "auth-login-error-invalid",
+          "body": "{\n  \"error\": \"Invalid credentials\",\n  \"message\": \"Email or password is incorrect\"\n}",
+          "latency": 50,
+          "statusCode": 401,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        }
+      ],
+      "enabled": true,
+      "documentation": "Login user"
+    },
+    {
+      "id": "auth-verify",
+      "method": "get",
+      "endpoint": "auth/verify",
+      "responses": [
+        {
+          "id": "auth-verify-success",
+          "body": "{\n  \"user\": {\n    \"id\": \"550e8400-e29b-41d4-a716-446655440000\",\n    \"email\": \"test@example.com\",\n    \"name\": \"John Doe\",\n    \"created_at\": \"2024-01-01T00:00:00Z\"\n  },\n  \"valid\": true\n}",
+          "latency": 50,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [
+            {
+              "target": "header",
+              "modifier": "Authorization",
+              "value": "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9",
+              "operator": "regex"
+            }
+          ],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        },
+        {
+          "id": "auth-verify-error-unauthorized",
+          "body": "{\n  \"error\": \"Unauthorized\",\n  \"message\": \"Invalid or missing token\"\n}",
+          "latency": 50,
+          "statusCode": 401,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        }
+      ],
+      "enabled": true,
+      "documentation": "Verify user token"
+    },
+    {
+      "id": "auth-logout",
+      "method": "post",
+      "endpoint": "auth/logout",
+      "responses": [
+        {
+          "id": "auth-logout-success",
+          "body": "{\n  \"message\": \"Logout successful\"\n}",
+          "latency": 50,
+          "statusCode": 200,
+          "headers": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "filePath": null,
+          "sendFileAsBody": false,
+          "rules": [],
+          "rulesOperator": "OR",
+          "disableTemplating": false
+        }
+      ],
+      "enabled": true,
+      "documentation": "Logout user"
+    }
+  ],
+  "proxyMode": false,
+  "proxyHost": "",
+  "proxyReqHeaders": [],
+  "proxyResHeaders": [],
+  "data": [],
+  "db": {
+    "tasks": [
+      {
+        "task_id": "1",
+        "name": "Learn Svelte",
+        "is_done": false
+      },
+      {
+        "task_id": "2",
+        "name": "Build a Todo App",
+        "is_done": true
+      },
+      {
+        "task_id": "3",
+        "name": "Deploy to Production",
+        "is_done": false
+      }
+    ]
+  },
+  "headers": [],
+  "cors": true,
+  "defaultHeaders": [
+    {
+      "key": "Access-Control-Allow-Origin",
+      "value": "*"
+    },
+    {
+      "key": "Access-Control-Allow-Methods",
+      "value": "GET, POST, PUT, PATCH, DELETE, OPTIONS"
+    },
+    {
+      "key": "Access-Control-Allow-Headers",
+      "value": "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+    }
+  ]
+}
