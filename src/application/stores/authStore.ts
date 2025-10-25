@@ -1,5 +1,7 @@
 import { writable, derived } from 'svelte/store';
 import type { User } from '../../core/models/User';
+import type { LocalStorageRepository } from '../../core/repositories/LocalStorageRepository';
+import { LocalStorageRepositoryImpl } from '../../data/repositories/LocalStorageRepositoryImpl';
 
 interface AuthState {
   user: User | null;
@@ -19,14 +21,12 @@ const initialState: AuthState = {
 };
 
 // Load from localStorage if available
-function loadFromStorage(): AuthState {
-  if (typeof window === 'undefined') return initialState;
+function loadFromStorage(storage: LocalStorageRepository): AuthState {
+  const token = storage.getItem('auth_token');
+  const userStr = storage.getItem('auth_user');
   
-  try {
-    const token = localStorage.getItem('auth_token');
-    const userStr = localStorage.getItem('auth_user');
-    
-    if (token && userStr) {
+  if (token && userStr) {
+    try {
       const user = JSON.parse(userStr);
       return {
         ...initialState,
@@ -34,17 +34,17 @@ function loadFromStorage(): AuthState {
         token,
         isAuthenticated: true,
       };
+    } catch (error) {
+      console.error('Failed to parse auth state from storage:', error);
     }
-  } catch (error) {
-    console.error('Failed to load auth state from storage:', error);
   }
   
   return initialState;
 }
 
 // Create the store
-function createAuthStore() {
-  const { subscribe, set, update } = writable<AuthState>(loadFromStorage());
+function createAuthStore(storage: LocalStorageRepository = new LocalStorageRepositoryImpl()) {
+  const { subscribe, set, update } = writable<AuthState>(loadFromStorage(storage));
 
   return {
     subscribe,
@@ -58,11 +58,9 @@ function createAuthStore() {
     },
     
     login: (user: User, token: string) => {
-      // Save to localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_token', token);
-        localStorage.setItem('auth_user', JSON.stringify(user));
-      }
+      // Save to localStorage with encryption
+      storage.setItem('auth_token', token);
+      storage.setItem('auth_user', JSON.stringify(user));
       
       set({
         user,
@@ -76,7 +74,7 @@ function createAuthStore() {
     logout: async () => {
       try {
         // Call API to invalidate the session
-        const token = localStorage.getItem('auth_token');
+        const token = storage.getItem('auth_token');
         if (token) {
           // Importing here to avoid circular dependency
           const { AuthApiDataSource } = await import('../../data/datasources/AuthApiDataSource');
@@ -88,10 +86,8 @@ function createAuthStore() {
         // Continue with logout even if API call fails
       } finally {
         // Clear localStorage
-        if (typeof window !== 'undefined') {
-          localStorage.removeItem('auth_token');
-          localStorage.removeItem('auth_user');
-        }
+        storage.removeItem('auth_token');
+        storage.removeItem('auth_user');
         
         set(initialState);
       }
@@ -99,9 +95,7 @@ function createAuthStore() {
     
     updateUser: (user: User) => {
       // Update localStorage
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('auth_user', JSON.stringify(user));
-      }
+      storage.setItem('auth_user', JSON.stringify(user));
       
       update(state => ({
         ...state,
@@ -110,10 +104,8 @@ function createAuthStore() {
     },
     
     reset: () => {
-      if (typeof window !== 'undefined') {
-        localStorage.removeItem('auth_token');
-        localStorage.removeItem('auth_user');
-      }
+      storage.removeItem('auth_token');
+      storage.removeItem('auth_user');
       set(initialState);
     },
   };

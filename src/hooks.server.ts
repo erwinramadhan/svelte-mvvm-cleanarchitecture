@@ -1,5 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import { paraglideMiddleware } from '$lib/paraglide/server';
+import { applyCSP } from '$lib/security/csp';
 
 // Server-side middleware for authentication
 const handleAuth: Handle = async ({ event, resolve }) => {
@@ -26,5 +27,17 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 		});
 	});
 
+// CSP middleware for XSS protection
+const handleCSP: Handle = async ({ event, resolve }) => {
+	const response = await resolve(event);
+	
+	// Apply Content Security Policy header
+	if (!response.headers.get('Content-Security-Policy')) {
+		response.headers.set('Content-Security-Policy', applyCSP());
+	}
+	
+	return response;
+};
+
 // Chain the handles
-export const handle: Handle = handleAuth;
+export const handle: Handle = handleCSP;
