@@ -6,7 +6,7 @@ export interface TaskDTO {
 }
 
 // Mapper dari DTO → Domain Model
-import type { Task } from '../../core/models/Task';
+import type { Task } from '$core/models/Task';
 
 export function toDomainTask(dto: TaskDTO): Task {
 	return {

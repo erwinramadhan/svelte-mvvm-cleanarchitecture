@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Task } from '../../core/models/Task';
+	import type { Task } from '$core/models/Task';
 	export let task: Task;
 </script>
 

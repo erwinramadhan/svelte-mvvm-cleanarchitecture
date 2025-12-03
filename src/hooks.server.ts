@@ -1,13 +1,14 @@
 import type { Handle } from '@sveltejs/kit';
+import { sequence } from '@sveltejs/kit/hooks';
 import { paraglideMiddleware } from '$lib/paraglide/server';
 import { applyCSP } from '$lib/security/csp';
 
 // Server-side middleware for authentication
 const handleAuth: Handle = async ({ event, resolve }) => {
 	// Skip authentication for auth routes
-	const isAuthRoute = event.url.pathname.startsWith('/login') || 
-										 event.url.pathname.startsWith('/register');
-	
+	const isAuthRoute =
+		event.url.pathname.startsWith('/login') || event.url.pathname.startsWith('/register');
+
 	if (isAuthRoute) {
 		return resolve(event);
 	}
@@ -30,14 +31,14 @@ const handleParaglide: Handle = ({ event, resolve }) =>
 // CSP middleware for XSS protection
 const handleCSP: Handle = async ({ event, resolve }) => {
 	const response = await resolve(event);
-	
+
 	// Apply Content Security Policy header
 	if (!response.headers.get('Content-Security-Policy')) {
 		response.headers.set('Content-Security-Policy', applyCSP());
 	}
-	
+
 	return response;
 };
 
 // Chain the handles
-export const handle: Handle = handleCSP;
+export const handle = sequence(handleAuth, handleCSP, handleParaglide);

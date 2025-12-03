@@ -1,10 +1,10 @@
-import type { Task } from '../../core/models/Task';
-import type { TaskRepository } from '../../core/repositories/TaskRepository';
-import { TaskApiDataSource } from '../datasources/TaskApiDataSource';
-import { toDomainTask, toTaskDto } from '../dtos/TaskDTO';
+import type { Task } from '$core/models/Task';
+import type { TaskRepository } from '$core/repositories/TaskRepository';
+import { TaskApiDataSource } from '$data/datasources/TaskApiDataSource';
+import { toDomainTask, toTaskDto } from '$data/dtos/TaskDTO';
 
 export class TaskRepositoryImpl implements TaskRepository {
-	private api = new TaskApiDataSource();
+	constructor(private api: TaskApiDataSource) {}
 
 	async getAll(): Promise<Task[]> {
 		const dtoList = await this.api.fetchTasks();
