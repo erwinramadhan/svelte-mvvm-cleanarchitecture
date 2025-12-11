@@ -1,4 +1,29 @@
-export interface User {
+export interface UserProfile {
+	fullName: string;
+	firstName: string;
+	lastName: string;
+	username: string;
+	primaryBranchID: string;
+	userType: string;
+	activityLat: string;
+	activityLon: string;
+	gender: string;
+	birthPlace: string;
+	dateOfBirth: string;
+	nik: string;
+	nationality: string;
+	religion: string;
+	maritalStatus: string;
+	phone: string;
+	address: string;
+	profession: string;
+	addressLat: string;
+	addressLon: string;
+	settings: string;
+	roleCode: string;
+}
+
+export interface User extends UserProfile {
 	id: string;
 	email: string;
 	name: string;
@@ -16,8 +41,7 @@ export interface LoginCredentials {
 	password: string;
 }
 
-export interface RegisterCredentials {
+export interface RegisterCredentials extends UserProfile {
 	email: string;
-	password: string;
-	name: string;
+	passwordRaw: string;
 }

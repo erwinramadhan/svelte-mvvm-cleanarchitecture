@@ -1,5 +1,17 @@
 import axios from 'axios';
 
+let unauthorizedHandler: (() => void) | null = null;
+
+export const setUnauthorizedHandler = (handler: () => void) => {
+	unauthorizedHandler = handler;
+
+	return () => {
+		if (unauthorizedHandler === handler) {
+			unauthorizedHandler = null;
+		}
+	};
+};
+
 // Create an axios instance with default configuration
 const axiosInstance = axios.create({
 	baseURL: '/api', // Base URL for all API requests (proxied through Vite dev server)
@@ -38,6 +50,15 @@ axiosInstance.interceptors.request.use(
 );
 
 // Response interceptor - Handle token expiration
+const handleUnauthorized = () => {
+	if (typeof window !== 'undefined') {
+		localStorage.removeItem('auth_token');
+		localStorage.removeItem('auth_user');
+	}
+
+	unauthorizedHandler?.();
+};
+
 axiosInstance.interceptors.response.use(
 	(response) => {
 		return response;
@@ -45,11 +66,7 @@ axiosInstance.interceptors.response.use(
 	(error) => {
 		// Handle 401 Unauthorized - token expired or invalid
 		if (error.response?.status === 401) {
-			// Clear invalid token
-			if (typeof window !== 'undefined') {
-				localStorage.removeItem('auth_token');
-				localStorage.removeItem('auth_user');
-			}
+			handleUnauthorized();
 
 			// Redirect to login if not already on auth pages
 			if (

@@ -17,7 +17,10 @@ export class AuthRepositoryImpl implements AuthRepository {
 		try {
 			const response = await this.dataSource.login(credentials);
 			return {
-				user: response.user,
+				user: {
+					...response.user,
+					name: response.user.name || response.user.fullName
+				},
 				token: response.token,
 				message: response.message
 			};
@@ -39,7 +42,10 @@ export class AuthRepositoryImpl implements AuthRepository {
 		try {
 			const response = await this.dataSource.register(credentials);
 			return {
-				user: response.user,
+				user: {
+					...response.user,
+					name: response.user.name || response.user.fullName
+				},
 				token: response.token,
 				message: response.message
 			};

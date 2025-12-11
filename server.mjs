@@ -17,8 +17,30 @@ let users = [
 	{
 		id: '550e8400-e29b-41d4-a716-446655440000',
 		email: 'test@example.com',
-		password: '$2b$10$3QfcRRcltYOv1nFZROz0O.QecB2f02.TDN.PfeZOhAPhZRz4XI2fy', // 'password123' hashed
+		username: 'testuser',
+		fullName: 'John Doe',
+		firstName: 'John',
+		lastName: 'Doe',
+		primaryBranchID: 'BRANCH001',
+		userType: 'internal',
+		activityLat: '-6.2000',
+		activityLon: '106.8166',
+		gender: 'male',
+		birthPlace: 'Jakarta',
+		dateOfBirth: '1990-01-01',
+		nik: '1234567890123456',
+		nationality: 'ID',
+		religion: 'Islam',
+		maritalStatus: 'single',
+		phone: '081234567890',
+		address: 'Jl. Demo No. 1, Jakarta',
+		profession: 'Engineer',
+		addressLat: '-6.2005',
+		addressLon: '106.8169',
+		settings: '{"theme":"dark","language":"id"}',
+		roleCode: 'platform_admin',
 		name: 'John Doe',
+		passwordHash: '$2b$10$3QfcRRcltYOv1nFZROz0O.QecB2f02.TDN.PfeZOhAPhZRz4XI2fy', // 'password123' hashed
 		created_at: '2024-01-01T00:00:00Z'
 	}
 ];
@@ -36,32 +58,101 @@ function generateToken(user) {
 	);
 }
 
+function sanitizeUser(user) {
+	const { ...safeUser } = user;
+	return safeUser;
+}
+
 // Auth routes
 app.post('/auth/register', (req, res) => {
-	const { email, password, name } = req.body;
+	const payload = req.body;
+	const requiredFields = [
+		'email',
+		'passwordRaw',
+		'fullName',
+		'firstName',
+		'lastName',
+		'username',
+		'primaryBranchID',
+		'userType',
+		'activityLat',
+		'activityLon',
+		'gender',
+		'birthPlace',
+		'dateOfBirth',
+		'nik',
+		'nationality',
+		'religion',
+		'maritalStatus',
+		'phone',
+		'address',
+		'profession',
+		'addressLat',
+		'addressLon',
+		'settings',
+		'roleCode'
+	];
 
-	if (!email || !password || !name) {
+	const missingFields = requiredFields.filter((field) => !payload[field]);
+
+	if (missingFields.length > 0) {
 		return res.status(400).json({
 			error: 'Bad Request',
-			message: 'Email, password, and name are required'
+			message: `Missing required fields: ${missingFields.join(', ')}`
 		});
 	}
 
-	// Check if user already exists
-	const existingUser = users.find((user) => user.email === email);
+	// Check for duplicate email or username
+	const existingUser = users.find(
+		(user) => user.email === payload.email || user.username === payload.username
+	);
 	if (existingUser) {
 		return res.status(409).json({
-			error: 'Email already exists',
-			message: 'User with this email already registered'
+			error: 'Conflict',
+			message: 'Email or username already exists'
+		});
+	}
+
+	// Validate settings JSON
+	try {
+		if (payload.settings) {
+			JSON.parse(payload.settings);
+		}
+	} catch {
+		return res.status(400).json({
+			error: 'Bad Request',
+			message: 'Settings must be a valid JSON string'
 		});
 	}
 
 	// Create new user
 	const newUser = {
 		id: randomUUID(),
-		email,
-		password: bcrypt.hashSync(password, 10), // In a real app, hash the password
-		name,
+		email: payload.email,
+		username: payload.username,
+		fullName: payload.fullName,
+		firstName: payload.firstName,
+		lastName: payload.lastName,
+		primaryBranchID: payload.primaryBranchID,
+		userType: payload.userType,
+		activityLat: payload.activityLat,
+		activityLon: payload.activityLon,
+		gender: payload.gender,
+		birthPlace: payload.birthPlace,
+		dateOfBirth: payload.dateOfBirth,
+		nik: payload.nik,
+		nationality: payload.nationality,
+		religion: payload.religion,
+		maritalStatus: payload.maritalStatus,
+		phone: payload.phone,
+		address: payload.address,
+		profession: payload.profession,
+		addressLat: payload.addressLat,
+		addressLon: payload.addressLon,
+		settings: payload.settings,
+		roleCode: payload.roleCode,
+		name: payload.fullName,
+		passwordHash: bcrypt.hashSync(payload.passwordRaw, 10),
 		created_at: new Date().toISOString()
 	};
 
@@ -71,12 +162,7 @@ app.post('/auth/register', (req, res) => {
 	const token = generateToken(newUser);
 
 	res.status(201).json({
-		user: {
-			id: newUser.id,
-			email: newUser.email,
-			name: newUser.name,
-			created_at: newUser.created_at
-		},
+		user: sanitizeUser(newUser),
 		token,
 		message: 'Registration successful'
 	});
@@ -103,7 +189,7 @@ app.post('/auth/login', (req, res) => {
 	}
 
 	// Check credentials (in real app, compare hashed password)
-	const isValidPassword = bcrypt.compareSync(password, user.password);
+	const isValidPassword = bcrypt.compareSync(password, user.passwordHash);
 	if (!isValidPassword) {
 		return res.status(401).json({
 			error: 'Invalid credentials',
@@ -115,12 +201,7 @@ app.post('/auth/login', (req, res) => {
 	const token = generateToken(user);
 
 	res.status(200).json({
-		user: {
-			id: user.id,
-			email: user.email,
-			name: user.name,
-			created_at: user.created_at
-		},
+		user: sanitizeUser(user),
 		token,
 		message: 'Login successful'
 	});
@@ -153,12 +234,7 @@ app.get('/auth/verify', (req, res) => {
 		}
 
 		res.status(200).json({
-			user: {
-				id: user.id,
-				email: user.email,
-				name: user.name,
-				created_at: user.created_at
-			},
+			user: sanitizeUser(user),
 			valid: true
 		});
 	} catch {
